@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# added rayquaza, fixed haunter animation
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from astral import LocationInfo, Observer
@@ -381,12 +382,13 @@ def main():
             if trainer_anim.start_time is not None:
                 ray_anim.start()
         
-        ray_anim.update_and_draw(canvas)
+        ray_active = ray_anim.update_and_draw(canvas)
         
         if moon_progress > 0.0:
-            if not haunter_anim.active and haunter_anim.start_time is None:
-                haunter_anim.start()
-            haunter_anim.update_and_draw(canvas)
+            if not ray_active and not haunter_anim.active and haunter_anim.start_time is None:
+                if ray_anim.start_time is not None:
+                    haunter_anim.start()
+            haunter_active = trainer_anim.update_and_draw(canvas)
             
         canvas = matrix.SwapOnVSync(canvas)  
         
