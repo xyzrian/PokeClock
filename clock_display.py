@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# added rayquaza, fixed haunter animation
-
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from astral import LocationInfo, Observer
 from astral.sun import sun
@@ -46,18 +44,18 @@ font.LoadFont(font_path)
 
 # IMAGE LOADING
 
-def load_image_if_exists(path, mode="RGBA"):
+def load_image(path, mode="RGBA"):
     if os.path.exists(path):
         return Image.open(path).convert(mode)
     return None
 
-sun_img = load_image_if_exists("/home/dezel/led_images/sun_resized.png")
-moon_img = load_image_if_exists("/home/dezel/led_images/moon_resized.png")
-trees_img = load_image_if_exists("/home/dezel/led_images/trees_led.png")
-rocks_img = load_image_if_exists("/home/dezel/led_images/rocks_led.png")
-clouds_img = load_image_if_exists("/home/dezel/led_images/clouds2.png")
+sun_img = load_image("/home/dezel/led_images/sun_resized.png")
+moon_img = load_image("/home/dezel/led_images/moon_resized.png")
+trees_img = load_image("/home/dezel/led_images/trees_led.png")
+rocks_img = load_image("/home/dezel/led_images/rocks_led.png")
+clouds_img = load_image("/home/dezel/led_images/clouds2.png")
 
-def load_gif_frames(path, target_height):
+def load_gif(path, target_height):
     frames = []
     if os.path.exists(path):
         try:
@@ -73,11 +71,11 @@ def load_gif_frames(path, target_height):
             print(f"Error loading {path}: {e}")
     return frames
 
-hooh_frames = load_gif_frames("/home/dezel/led_images/ho-oh_short.gif", target_height=15)
-lugia_frames = load_gif_frames("/home/dezel/led_images/lugia_short.gif", target_height=15)
-trainer_frames = load_gif_frames("/home/dezel/led_images/red_pika_flipped.gif", target_height=14)
-ray_frames = load_gif_frames("/home/dezel/led_images/ray_led.gif", target_height=32)
-haunter_frames = load_gif_frames("/home/dezel/led_images/haunter.gif", target_height=24)
+hooh_frames = load_gif("/home/dezel/led_images/ho-oh_short.gif", target_height=15)
+lugia_frames = load_gif("/home/dezel/led_images/lugia_short.gif", target_height=15)
+trainer_frames = load_gif("/home/dezel/led_images/red_pika_flipped.gif", target_height=14)
+ray_frames = load_gif("/home/dezel/led_images/ray_led.gif", target_height=32)
+haunter_frames = load_gif("/home/dezel/led_images/haunter.gif", target_height=24)
 
 # RENDERING FUNCTIONS
 
@@ -388,7 +386,7 @@ def main():
             if not ray_active and not haunter_anim.active and haunter_anim.start_time is None:
                 if ray_anim.start_time is not None:
                     haunter_anim.start()
-            haunter_active = trainer_anim.update_and_draw(canvas)
+            haunter_active = haunter_anim.update_and_draw(canvas)
             
         canvas = matrix.SwapOnVSync(canvas)  
         
