@@ -71,11 +71,11 @@ def load_gif(path, target_height):
             print(f"Error loading {path}: {e}")
     return frames
 
-hooh_frames = load_gif("/home/dezel/led_images/ho-oh_short.gif", target_height=15)
-lugia_frames = load_gif("/home/dezel/led_images/lugia_short.gif", target_height=15)
+hooh_frames    = load_gif("/home/dezel/led_images/ho-oh_short.gif",      target_height=15)
+lugia_frames   = load_gif("/home/dezel/led_images/lugia_short.gif",      target_height=15)
 trainer_frames = load_gif("/home/dezel/led_images/red_pika_flipped.gif", target_height=14)
-ray_frames = load_gif("/home/dezel/led_images/ray_led.gif", target_height=32)
-haunter_frames = load_gif("/home/dezel/led_images/haunter.gif", target_height=24)
+ray_frames     = load_gif("/home/dezel/led_images/ray_led.gif",          target_height=32)
+haunter_frames = load_gif("/home/dezel/led_images/haunter.gif",          target_height=24)
 
 # RENDERING FUNCTIONS
 
@@ -163,14 +163,20 @@ class HorizontalAnimation:
         self.y_offset = y_offset
         self.start_time = None
         self.active = False
+        self.has_run = False
         
         self.width = frames[0].width if frames else 0
         self.height = frames[0].height if frames else 0
-    
+
+    @property
+    def done(self):
+        return self.has_run and not self.active
+
     def start(self):
         if self.frames:
             self.start_time = time.time()
             self.active = True
+            self.has_run = True
     
     def update_and_draw(self, canvas):
         if not self.active or self.start_time is None or not self.frames:
@@ -192,12 +198,9 @@ class HorizontalAnimation:
             end_x = canvas.width
         
         x_pos = int(start_x + (end_x - start_x) * progress)
-        
         frame_idx = int(elapsed * self.fps) % len(self.frames)
         
-        y_pos = self.y_offset
-        
-        draw_image_on_canvas(canvas, self.frames[frame_idx], x_offset=x_pos, y_offset=y_pos)
+        draw_image_on_canvas(canvas, self.frames[frame_idx], x_offset=x_pos, y_offset=self.y_offset)
         return True
 
 class HaunterAnimation:
@@ -209,14 +212,20 @@ class HaunterAnimation:
         self.fps = fps
         self.start_time = None
         self.active = False
+        self.has_run = False
         
         self.width = frames[0].width if frames else 0
         self.height = frames[0].height if frames else 0
-    
+
+    @property
+    def done(self):
+        return self.has_run and not self.active
+
     def start(self):
         if self.frames:
             self.start_time = time.time()
             self.active = True
+            self.has_run = True
     
     def update_and_draw(self, canvas):
         if not self.active or self.start_time is None or not self.frames:
@@ -231,10 +240,10 @@ class HaunterAnimation:
         if elapsed < self.slide_duration:
             progress = elapsed / self.slide_duration
             start_x = canvas.width
-            end_x = canvas.width - self.width
+            end_x = canvas.width - self.width + 4  # offset to avoid colliding with the clock
             x_pos = int(start_x + (end_x - start_x) * progress)
         elif elapsed < self.slide_duration + self.hold_duration:
-            x_pos = canvas.width - self.width
+            x_pos = canvas.width - self.width + 4
         else:
             slide_out_elapsed = elapsed - self.slide_duration - self.hold_duration
             progress = slide_out_elapsed / self.slide_duration
@@ -257,12 +266,12 @@ def main():
     observer = Observer(latitude=city.latitude, longitude=city.longitude)
     
     prev_minute = None
-    hooh_anim = HorizontalAnimation(hooh_frames, direction='left', duration=5.0, fps=6, y_offset=1)
-    lugia_anim = HorizontalAnimation(lugia_frames, direction='left', duration=5.0, fps=6, y_offset=17)
+    hooh_anim    = HorizontalAnimation(hooh_frames,    direction='left',  duration=5.0, fps=6, y_offset=1)
+    lugia_anim   = HorizontalAnimation(lugia_frames,   direction='left',  duration=5.0, fps=6, y_offset=17)
     trainer_anim = HorizontalAnimation(trainer_frames, direction='right', duration=7.0, fps=6, y_offset=18)
-    ray_anim = HorizontalAnimation(ray_frames, direction='left', duration=7.0, fps=6, y_offset=0)
+    ray_anim     = HorizontalAnimation(ray_frames,     direction='left',  duration=7.0, fps=6, y_offset=0)
     haunter_anim = HaunterAnimation(haunter_frames, slide_duration=2.0, hold_duration=3.0, fps=8)
-    
+
     hooh_anim.start()
     
     cloud_offset = 0
@@ -350,6 +359,7 @@ def main():
         time_str = now.strftime("%H:%M")
         draw_time_text(canvas, font, time_str)
         
+        # Restart chain every minute
         current_minute = now.minute
         if prev_minute is None:
             prev_minute = current_minute
@@ -357,38 +367,27 @@ def main():
             prev_minute = current_minute
             if not hooh_anim.active:
                 hooh_anim.start()
-                lugia_anim.start_time = None
-                trainer_anim.start_time = None
-                ray_anim.start_time = None
-                haunter_anim.start_time = None
-        
-        hooh_active = hooh_anim.update_and_draw(canvas)
-        
-        if not hooh_active and not lugia_anim.active and lugia_anim.start_time is None:
-            if hooh_anim.start_time is not None:
-                lugia_anim.start()
-        
-        lugia_active = lugia_anim.update_and_draw(canvas)
-        
-        if not lugia_active and not trainer_anim.active and trainer_anim.start_time is None:
-            if lugia_anim.start_time is not None:
-                trainer_anim.start()
-        
-        trainer_active = trainer_anim.update_and_draw(canvas)
-        
-        if not trainer_active and not ray_anim.active and ray_anim.start_time is None:
-            if trainer_anim.start_time is not None:
-                ray_anim.start()
-        
-        ray_active = ray_anim.update_and_draw(canvas)
-        
-        if moon_progress > 0.0:
-            if not ray_active and not haunter_anim.active and haunter_anim.start_time is None:
-                if ray_anim.start_time is not None:
-                    haunter_anim.start()
-            haunter_active = haunter_anim.update_and_draw(canvas)
-            
-        canvas = matrix.SwapOnVSync(canvas)  
+                for anim in [lugia_anim, trainer_anim, ray_anim, haunter_anim]:
+                    anim.start_time = None
+                    anim.has_run = False
+
+        # Animation chain - run each gif after the prev has run
+        if hooh_anim.done and not lugia_anim.has_run:
+            lugia_anim.start()
+        if lugia_anim.done and not trainer_anim.has_run:
+            trainer_anim.start()
+        if trainer_anim.done and not ray_anim.has_run:
+            ray_anim.start()
+        if ray_anim.done and moon_progress > 0.0 and not haunter_anim.has_run:
+            haunter_anim.start()
+
+        hooh_anim.update_and_draw(canvas)
+        lugia_anim.update_and_draw(canvas)
+        trainer_anim.update_and_draw(canvas)
+        ray_anim.update_and_draw(canvas)
+        haunter_anim.update_and_draw(canvas)  # draws unconditionally once started
+
+        canvas = matrix.SwapOnVSync(canvas)
         
         if CLOUDY and clouds_img and sun_progress > 0.0:
             cloud_offset += CLOUD_DRIFT_SPEED * cloud_drift_direction
